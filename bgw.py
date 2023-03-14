@@ -58,17 +58,45 @@ if(Mypath.is_file()):
         except:
             newfile_magic = "dat" #Default extension
         filename = str(i) + "." + newfile_magic
+        oldfilename = filename
+        #attempting to get file names
+        if (type == 7):
+            try:
+                readertemp.seek(29)
+                filename = readertemp.read_str()
+            except:
+                pass
+        elif(type == 2):
+            try:
+                readertemp.seek(10)
+                filename = readertemp.read_str()
+                if (filename == ""):
+                    readertemp.seek(16)
+                    filename = readertemp.read_str()
+            except:
+                pass
+            
+        
+        output_path = directory / Path(Myfilename + ".unpack")
+        output_path.mkdir(parents=True, exist_ok=True)
+        filename = filename.replace("|",".")
+        try:
+            output_file = output_path / (filename)
+            if not os.path.exists(output_file):
+                fe = open(output_file, "wb")
+                fe.write(file)
+            else:
+                raise Exception("File Exists")
+        except:
+            filename = oldfilename
+            output_file = output_path / (filename)
+            fe = open(output_file, "wb")
+            fe.write(file)
         fileForJson = {
                     "Type": type,
                     "File Name": filename,
                 }
         print(f"Saving {filename}...")
-        output_path = directory / Path(Myfilename + ".unpack")
-        output_path.mkdir(parents=True, exist_ok=True)
-        output_file = output_path / (filename)
-        fe = open(output_file, "wb")
-        fe.write(file)
-        
         header.update({p: fileForJson})
         p+=1
         fe.close()
@@ -87,6 +115,7 @@ else:
     for i in range(int(p["Count"])):
         w.write_uint32(p[str(i)]["Type"])
         file = Path(sys.argv[1]) / p[str(i)]["File Name"]
+        print(f"Loading {file}...")
         fb = open(file, "rb")
         w.write_uint32(os.path.getsize(file))
         w.write_bytes(fb.read())
@@ -96,6 +125,7 @@ else:
     zlibw.set_endian(True)
     zlibw.write_str_fixed("ZLIB",4)
     zlibw.write_uint32(len(w.buffer()))
-    zlibw.write_bytes(zlib.compress(w.buffer(),9))
-    fe.write(w.buffer())
+    print(f"Compressing file into ZLIB format...")
+    zlibw.write_bytes(zlib.compress(w.buffer(),9)) #this is the ONLY type of compression the game excepts, the highest level
+    fe.write(zlibw.buffer())
         
