@@ -36,6 +36,7 @@ if(Mypath.is_file()):
         size = reader.read_uint32()
         file = reader.read_bytes(size)
         readertemp = BinaryReader(file)
+        #stole from retraso hello!!
         try: #Yes, this is a terrible way of doing this
             try:
                 readertemp.seek(8)
